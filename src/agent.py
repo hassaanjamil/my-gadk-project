@@ -1,13 +1,14 @@
-from google.adk.agents.llm_agent import Agent
+from src.config import LLM_MODEL_NAME
+from google.adk.agents.llm_agent import LlmAgent
 from google.adk.models.lite_llm import LiteLlm
-from src.instructions import time_agent_instruction
+from src.instructions import root_agent_description1, root_agent_instruction1
+from src.tools import get_capital_name
 
-from src.tools import get_current_time, get_time_zone
-
-root_agent = Agent(
-    model=LiteLlm(model="ollama_chat/llama3.2"),
-    name="time_agent",
-    description="Tells the current time in a specified city.",
-    instruction=(time_agent_instruction),
-    tools=[get_time_zone, get_current_time],
+root_agent = LlmAgent(
+      model=LiteLlm(model=LLM_MODEL_NAME),
+      name="capital_agent",
+      description=root_agent_description1,
+      instruction=root_agent_instruction1,
+      tools=[get_capital_name]
+    # instruction and tools will be added next
 )

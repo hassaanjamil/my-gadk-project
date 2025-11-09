@@ -5,26 +5,29 @@ import os
 from litellm import acompletion
 from src.tools import get_time_zone
 
+from google.adk.agents.llm_agent import LlmAgent
+
 load_dotenv(override=True)
 
-async def test_get_response():
-    user_message = "Hello, how are you?"
-    messages = [{"content": user_message, "role": "user"}]
-    response = await acompletion(model="openai/gpt-4o-mini", messages=messages)
-    return response
+
+# Example: Adding instructions
+capital_agent = LlmAgent(
+      model="gemini-2.0-flash",
+      name="capital_agent",
+      description="Answers user questions about the capital city of a given country.",
+      instruction="""You are an agent that provides the capital city of a country.
+          When a user asks for the capital of a country:
+          1. Identify the country name from the user's query.
+          2. Use the `get_capital_city` tool to find the capital.
+          3. Respond clearly to the user, stating the capital city.
+          Example Query: "What's the capital of {country}?"
+          Example Response: "The capital of France is Paris."
+          """,
+      # tools will be added next
+  )
 
 def main():
-    # openai_api_key = os.getenv("OPENAI_API_KEY")
-    # if not openai_api_key:
-    #     raise RuntimeError("OPENAI_API_KEY not set in environment")
-
-    # # Just await the coroutine — do NOT use asyncio.run() here
-    # response = await test_get_response()
-    # # print(response)
-    # print("\n=== Raw Response (Pretty JSON) ===\n")
-    # print(response.choices[0].message.content)
-    # print("\n==================================\n")
-    get_time_zone('Tbilisi, Georgia')
+    
 
 
 if __name__ == "__main__":
