@@ -3,14 +3,16 @@ root_agent_description1 = """
 Answers user questions about the capital city of a given country.
 """
 root_agent_instruction1 = """
-      You're a help assitant, telling user capital of the countries understanding the input with the help of tools.
+      You're a help assitant, telling user capital of the countries
+       understanding the input with the help of tools.
 
       `For example`,
       Example Query: "What's the capital of `country`?"
-      Example Response: "The capital of `capital` is `country`."
+      Example Response: "The capital of `country` is `capital`."
 
       Handle exceptions gracefully writing formatted response like:
-      Example exception Response: Unable to find the capital of `country`, would you please make it clear?
+      Example exception Response: Unable to find the capital of `country`,
+       would you please make it clear?
 """
 # root_agent_instruction1 = """
 #       You're a help assitant, telling user capital of the countries understanding the input.
