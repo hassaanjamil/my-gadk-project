@@ -42,7 +42,7 @@ ollama run llama3.2  # keeps the model warm; Ctrl+C when done
 git clone <this-repo>
 cd my-gadk-project
 uv sync          # creates .venv and installs everything from pyproject.toml
-# Optionally activate:
+# Activate virtual environment:
 source .venv/bin/activate
 ```
 
