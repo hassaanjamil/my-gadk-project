@@ -1,6 +1,6 @@
 # My GADK Project
 
-Agentic playground that demonstrates how to wire custom tools into the **Google Agent Development Kit (ADK)** and talk to multiple model providers through **LiteLLM**. The default agent (`src/agent.py`) can fetch world time data through HTTP tools, but you can swap in any LLM endpoint—OpenAI, Google (Gemini), DeepSeek, Groq, or a local Ollama server.
+Agentic playground that demonstrates how to wire custom tools into the **Google Agent Development Kit (ADK)** and talk to multiple model providers through **LiteLLM**. This repo now hosts a **multi-module agent pack** (`src/agents/*`) so you can serve several specialized agents—e.g., `capital_agent` or `ny_weather_time_planner_agent`—from a single ADK web UI.
 
 ---
 
@@ -13,7 +13,7 @@ Agentic playground that demonstrates how to wire custom tools into the **Google 
 | **python-dotenv** | Loads `.env` so the ADK process and your tools receive API keys/config without exporting them manually. |
 | **Pydantic** | Validates tool inputs/outputs (`CityTime`, `Timezone`) before they’re returned to the model. |
 | **CountryInfo · GeoPy · TimezoneFinder** | Utility libs for future geographic features; installed now to keep the environment ready. |
-| **Requests** (transitive) | Used in `src/tools.py` to call https://worldtimeapi.org. |
+| **Requests** (transitive) | Used inside each agent’s `tools.py` (e.g., `src/agents/capital_agent/tools.py`) to call https://worldtimeapi.org and other APIs. |
 
 Tooling:
 * **Python 3.12+**
@@ -25,7 +25,14 @@ Tooling:
 
 1. Install [uv](https://docs.astral.sh/uv/getting-started/installation/) (or use pipx).
 2. Install Python 3.12 (specified via `.python-version`).
-3. Optional (local inference): [Install Ollama](https://ollama.com/download) and run `ollama pull llama3.2`.
+3. **Required for local-first runs**: [Install Ollama](https://ollama.com/download), then run:
+
+```bash
+ollama pull llama3.2
+ollama run llama3.2  # keeps the model warm; Ctrl+C when done
+```
+
+> The multi-agent web runner expects `llama3.2` to be available via Ollama before you start ADK, otherwise LiteLLM will fail to stream responses.
 
 ---
 
@@ -56,7 +63,7 @@ GROQ_API_KEY=gsk_...
 
 # LiteLLM routing
 LITELLM_MODEL=openai/gpt-4o-mini
-LLM_MODEL_NAME=ollama_chat/llama3.2   # used in src/config.py
+LLM_MODEL_NAME=ollama_chat/llama3.2   # mirrored inside each agent config (e.g., src/agents/capital_agent/config.py)
 
 # Optional: make LiteLLM talk to a local Ollama server instead of cloud APIs
 OLLAMA_BASE_URL=http://localhost:11434
@@ -68,33 +75,36 @@ OLLAMA_BASE_URL=http://localhost:11434
 - **Google (Gemini via Google AI Studio)**: Generate a key at https://aistudio.google.com/app/apikey.
 - **DeepSeek**: Keys live at https://platform.deepseek.com/api-keys.
 - **Groq**: Use https://console.groq.com/keys.
-- **Ollama (local)**: Install Ollama, pull a model (`ollama pull llama3.2`), and keep `ollama serve` running; no key required, just set `LITELLM_MODEL=ollama_chat/llama3.2`.
+- **Ollama (local)**: Install Ollama, pull a model (`ollama pull llama3.2`), and keep either `ollama serve` or `ollama run llama3.2` running; no key required, just set `LITELLM_MODEL=ollama_chat/llama3.2`.
 
 > Tip: check the `.env` into `.gitignore` (already set) so secrets never leave your machine.
 
 ---
 
-## 5. Running the agent
+## 5. Running the agents
 
-### CLI chat (default)
-
-```bash
-uv run adk run src
-# or, inside the venv:
-adk run src
-```
-
-You’ll see `Running agent time_agent, type exit to exit.` and can start chatting. Type `exit` to quit. Use `--save_session` to persist transcripts.
-
-### Web playground
+### 1. Keep Ollama llama3.2 running
 
 ```bash
-uv run adk web src
+ollama run llama3.2
 ```
 
-This launches the ADK FastAPI server plus a lightweight React UI at `http://127.0.0.1:8000`.
+Leave this tab open; LiteLLM streams tokens from the local model while ADK brokers tool calls.
 
-### Direct LiteLLM smoke test
+### 2. Serve the multi-agent web workspace
+
+From the repo root:
+
+```bash
+cd src/agents
+uv run adk web --port 8000
+# or, with an activated venv:
+adk web --port 8000
+```
+
+Then visit `http://127.0.0.1:8000`, pick the agent you want to exercise from the dropdown (e.g., `capital_agent` vs `ny_weather_time_planner_agent`), and start chatting. Each agent keeps its own prompt, tools, and model config but shares the same ADK process.
+
+### 3. Direct LiteLLM smoke test
 
 `main.py` demonstrates basic LiteLLM usage:
 
@@ -110,22 +120,31 @@ Make sure the referenced provider key is present in `.env` before running the sc
 
 ```
 src/
-├─ __init__.py              # marks package so `adk` can import src.agent
-├─ agent.py                 # defines root_agent that ADK loads
-├─ config.py                # holds default LiteLLM model string
-├─ instructions.py          # prompt snippets for capital/time agents
-├─ tools.py                 # HTTP tools (timezone list + current time lookup)
-└─ ...
+├─ agents/
+│  ├─ __init__.py                # registers available agent modules for ADK
+│  ├─ capital_agent/
+│  │  ├─ agent.py                # exposes root_agent for capital lookups
+│  │  ├─ config.py               # LiteLLM model + provider routing
+│  │  ├─ instructions.py         # system / developer prompts
+│  │  ├─ pydantic.py             # IO schemas for custom tools
+│  │  └─ tools.py                # e.g., capital + timezone utilities
+│  └─ ny_weather_time_planner_agent/
+│     ├─ agent.py
+│     ├─ config.py
+│     ├─ instructions.py
+│     ├─ pydantic.py
+│     └─ tools.py
+└─ main.py                      # LiteLLM standalone smoke test
 ```
 
-The ADK loader expects `src/agent.py` to expose `root_agent`. Tools are normal Python callables that return JSON-serializable data or Pydantic models.
+Every subfolder under `src/agents/` is a self-contained ADK agent module. Add new agents by copying a folder, adjusting its config + toolchain, and importing it inside `src/agents/__init__.py`.
 
 ---
 
 ## 7. Troubleshooting
 
-- **`ModuleNotFoundError: No module named 'tools'`** — ensure `src/__init__.py` exists and imports inside `agent.py` use `from .tools import ...`.
+- **`ModuleNotFoundError: No module named 'tools'`** — ensure `src/agents/__init__.py` exports each module package and that submodules import tools with relative paths (e.g., `from .tools import ...`).
 - **Model errors** — double-check `LITELLM_MODEL` matches the key you’ve supplied (e.g., `openai/gpt-4o-mini`, `google/gemini-2.0-flash`, `groq/llama-3.1-70b-versatile`, `deepseek/deepseek-chat`, or `ollama_chat/llama3.2`).
 - **Ollama connection refused** — confirm `ollama serve` is running and `OLLAMA_BASE_URL` points to the same host/port.
 
-Happy hacking! Plug in new tools under `src/tools.py`, tweak prompts in `src/instructions.py`, and let Google ADK handle the orchestration.***
+Happy hacking! Plug new skills under `src/agents/<agent>/tools.py`, tweak prompts in each `instructions.py`, and let Google ADK handle the orchestration.***
