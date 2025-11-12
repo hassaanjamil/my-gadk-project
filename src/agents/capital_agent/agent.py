@@ -8,10 +8,10 @@ from .config import agent_content_config
 
 load_dotenv(override=True)
 
-llm_model_name = os.getenv("LLM_MODEL_NAME")
+LLM_MODEL_NAME = os.getenv("LLM_MODEL_NAME")
 
 root_agent = LlmAgent(
-      model=LiteLlm(model=llm_model_name),
+      model=LiteLlm(model=LLM_MODEL_NAME),
       name="capital_agent",
       generate_content_config=agent_content_config,
       description=root_agent_description1,
