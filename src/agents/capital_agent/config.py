@@ -1,7 +1,7 @@
 from google.genai import types
 
 agent_content_config = types.GenerateContentConfig(
-        temperature=0.2, # More deterministic output
+        temperature=0.2,
         max_output_tokens=250,
         safety_settings=[
             types.SafetySetting(

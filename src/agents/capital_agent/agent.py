@@ -1,15 +1,17 @@
 from dotenv import load_dotenv
+import os
 from google.adk.agents.llm_agent import LlmAgent
 from google.adk.models.lite_llm import LiteLlm
-from src.instructions import root_agent_description1, root_agent_instruction1
-from src.tools import get_capital_name
-from src.config import agent_content_config
-import os
+from .instructions import root_agent_description1, root_agent_instruction1
+from .tools import get_capital_name
+from .config import agent_content_config
 
 load_dotenv(override=True)
 
+llm_model_name = os.getenv("LLM_MODEL_NAME")
+
 root_agent = LlmAgent(
-      model=LiteLlm(model=os.getenv("LLM_MODEL_NAME")),
+      model=LiteLlm(model=llm_model_name),
       name="capital_agent",
       generate_content_config=agent_content_config,
       description=root_agent_description1,
