@@ -48,6 +48,19 @@ source .venv/bin/activate
 
 All commands below assume either an activated venv or you prefix them with `uv run`.
 
+### Optional: manual venv setup (without uv)
+
+If you’d rather manage a traditional virtual environment yourself:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate        # Linux / macOS
+# On Windows (PowerShell):
+# .venv\Scripts\Activate.ps1
+```
+
+> Once the venv is active, run `uv sync` to mirror the environment.
+
 ---
 
 ## 4. Configure environment variables
@@ -96,6 +109,8 @@ Leave this tab open; LiteLLM streams tokens from the local model while ADK broke
 From the repo root:
 
 ```bash
+source .venv/bin/activate
+
 cd src/agents
 uv run adk web --port 8000
 # or, with an activated venv:
