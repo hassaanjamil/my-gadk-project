@@ -3,7 +3,6 @@ from .constants import (
     LLM_MODEL_NAME,
     STATE_CURRENT_DOC,
     STATE_CRITICISM,
-    STATE_INITIAL_TOPIC
  )
 from google.adk.agents import LoopAgent, LlmAgent, SequentialAgent
 from google.adk.models.lite_llm import LiteLlm
@@ -18,7 +17,7 @@ from .instruction import (
 )
 
 # --- Constants ---
-print('Contants created.')
+print('Constants created.')
 
 # --- Tool Definition ---
 print('Tools generated.')
@@ -37,7 +36,7 @@ initial_writer_agent = LlmAgent(
 )
 
 # STEP 2a: Critic Agent (Inside the Refinement Loop)
-critic_agent_in_loop = LlmAgent(
+critic_agent = LlmAgent(
     name="CriticAgent",
     model=LiteLlm(model=LLM_MODEL_NAME),
     include_contents='none',
@@ -49,7 +48,7 @@ critic_agent_in_loop = LlmAgent(
 
 
 # STEP 2b: Refiner/Exiter Agent (Inside the Refinement Loop)
-refiner_agent_in_loop = LlmAgent(
+refiner_agent = LlmAgent(
     name="RefinerAgent",
     model=LiteLlm(model=LLM_MODEL_NAME),
     # Relies solely on state via placeholders
@@ -66,8 +65,8 @@ refinement_loop = LoopAgent(
     name="RefinementLoop",
     # Agent order is crucial: Critique first, then Refine/Exit
     sub_agents=[
-        critic_agent_in_loop,
-        refiner_agent_in_loop,
+        critic_agent,
+        refiner_agent,
     ],
     max_iterations=5 # Limit loops
 )
